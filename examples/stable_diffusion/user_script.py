@@ -4,7 +4,7 @@
 # --------------------------------------------------------------------------
 import config
 import torch
-from diffusers import AutoencoderKL, UNet2DConditionModel, ControlNetModel
+from diffusers import AutoencoderKL, UNet2DConditionModel
 from diffusers.pipelines.stable_diffusion.safety_checker import StableDiffusionSafetyChecker
 from huggingface_hub import model_info
 from transformers.models.clip.modeling_clip import CLIPTextModel
@@ -200,95 +200,6 @@ def unet_conversion_inputs(model=None):
 @Registry.register_dataloader()
 def unet_data_loader(dataset, batch_size, *args, **kwargs):
     return RandomDataLoader(unet_inputs, batch_size, torch.float16)
-
-
-# -----------------------------------------------------------------------------
-# Controlnet
-# -----------------------------------------------------------------------------
-
-def controlnet_inputs(batch_size, torch_dtype, is_conversion_inputs=False):
-    # TODO(jstoecker): Rename onnx::Concat_4 to text_embeds and onnx::Shape_5 to time_ids
-    inputs = {
-        "sample": torch.rand((2*batch_size, 4, config.unet_sample_size, config.unet_sample_size), dtype=torch_dtype),
-        "timestep": torch.rand((2*batch_size,), dtype=torch_dtype),
-        "encoder_hidden_states": torch.rand((2*batch_size, 77, config.cross_attention_dim), dtype=torch_dtype),
-        "controlnet_cond": torch.rand((2*batch_size, 3, config.unet_sample_size * 8, config.unet_sample_size * 8), dtype=torch_dtype),
-    }
-    return inputs
-
-
-def controlnet_load(model_name):
-    base_model_id = get_base_model_name(model_name)
-    model = ControlNetModel.from_pretrained(base_model_id, subfolder="controlnet")
-    return model
-
-
-def controlnet_conversion_inputs(model=None):
-    return tuple(controlnet_inputs(1, torch.float32, True).values())
-
-
-@Registry.register_dataloader()
-def controlnet_data_loader(dataset, batch_size, *args, **kwargs):
-    return RandomDataLoader(controlnet_inputs, batch_size, torch.float16)
-
-
-# -----------------------------------------------------------------------------
-# Unet-controlnet
-# -----------------------------------------------------------------------------
-def unet_controlnet_inputs(batch_size, torch_dtype, is_conversion_inputs=False):
-    # TODO(jstoecker): Rename onnx::Concat_4 to text_embeds and onnx::Shape_5 to time_ids
-    down_control_block = [3*torch.rand((2*batch_size, 320, 64, 64), dtype=torch_dtype)]
-    down_control_block.append(torch.rand((2*batch_size, 320, 32, 32), dtype=torch_dtype))
-    down_control_block.append(3*torch.rand((2*batch_size, 640, 32, 32), dtype=torch_dtype))
-    down_control_block.append(torch.rand((2*batch_size, 640, 16, 16), dtype=torch_dtype))
-    down_control_block.append(2*torch.rand((2*batch_size, 1280, 16, 16), dtype=torch_dtype))
-    down_control_block.append(3*torch.rand((2*batch_size, 1280, 8, 8), dtype=torch_dtype))
-
-    mid_control_block = [2*torch.rand((1280, 8, 8), dtype=torch_dtype)]
-    inputs = {
-        "sample": torch.rand((batch_size, 4, config.unet_sample_size, config.unet_sample_size), dtype=torch_dtype),
-        "timestep": torch.rand((batch_size,), dtype=torch_dtype),
-        "encoder_hidden_states": torch.rand((batch_size, 77, config.cross_attention_dim), dtype=torch_dtype),
-        "down_block_additional_residuals": down_control_block,
-        "mid_block_additional_residual": mid_control_block,
-    }
-
-    # use as kwargs since they won't be in the correct position if passed along with the tuple of inputs
-    kwargs = {
-        "return_dict": False,
-    }
-    if is_conversion_inputs:
-        inputs["additional_inputs"] = {
-            **kwargs,
-            "added_cond_kwargs": {
-                "text_embeds": torch.rand((1, 1280), dtype=torch_dtype),
-                "time_ids": torch.rand((1, 5), dtype=torch_dtype),
-            },
-        }
-    else:
-        inputs.update(kwargs)
-        inputs["onnx::Concat_4"] = torch.rand((1, 1280), dtype=torch_dtype)
-        inputs["onnx::Shape_5"] = torch.rand((1, 5), dtype=torch_dtype)
-
-    return inputs
-
-
-def unet_controlnet_load(model_name):
-    #TODO: merge this with the other unet function
-    base_model_id = get_base_model_name(model_name)
-    model = UNet2DConditionModel.from_pretrained(base_model_id, subfolder="unet")
-    if is_lora_model(model_name):
-        merge_lora_weights(model, model_name, "unet")
-    return model
-
-
-def unet_controlnet_conversion_inputs(model=None):
-    return tuple(unet_controlnet_inputs(1, torch.float32, True).values())
-
-
-@Registry.register_dataloader()
-def unet_controlnet_data_loader(dataset, batch_size, *args, **kwargs):
-    return RandomDataLoader(unet_controlnet_inputs, batch_size, torch.float16)
 
 
 # -----------------------------------------------------------------------------

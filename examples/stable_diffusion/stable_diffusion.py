@@ -13,7 +13,7 @@ from typing import Dict
 import config
 import numpy as np
 import torch
-from diffusers import DiffusionPipeline, StableDiffusionControlNetPipeline, ControlNetModel
+from diffusers import DiffusionPipeline
 from packaging import version
 from user_script import get_base_model_name
 
@@ -195,7 +195,6 @@ def update_config_with_provider(config: Dict, provider: str):
 
 def optimize(
     model_id: str,
-    model_type: str,
     provider: str,
     unoptimized_model_dir: Path,
     optimized_model_dir: Path,
@@ -222,25 +221,14 @@ def optimize(
     # This avoids an issue where the non-ONNX components (tokenizer, scheduler, and feature extractor) are not
     # automatically cached correctly if individual models are fetched one at a time.
     print("Download stable diffusion PyTorch pipeline...")
-    if model_type == "controlnet":
-        canny_controlnet = ControlNetModel.from_pretrained(
-            "lllyasviel/control_v11p_sd15_canny", torch_dtype=torch.float32
-        )
-
-        pipeline = StableDiffusionControlNetPipeline.from_pretrained(
-            "stable-diffusion-v1-5/stable-diffusion-v1-5", controlnet=canny_controlnet, safety_checker=None, torch_dtype=torch.float32
-        )
-    elif model_type == "sd":
-        pipeline = DiffusionPipeline.from_pretrained(base_model_id, torch_dtype=torch.float32)
-
+    pipeline = DiffusionPipeline.from_pretrained(base_model_id, torch_dtype=torch.float32)
     config.vae_sample_size = pipeline.vae.config.sample_size
     config.cross_attention_dim = pipeline.unet.config.cross_attention_dim
     config.unet_sample_size = pipeline.unet.config.sample_size
 
     model_info = {}
 
-    #submodel_names = ["vae_encoder", "vae_decoder", "unet", "text_encoder"]
-    submodel_names = ["vae_encoder", "vae_decoder", "unet_controlnet", "text_encoder", "controlnet"]
+    submodel_names = ["vae_encoder", "vae_decoder", "unet", "text_encoder"]
 
     has_safety_checker = getattr(pipeline, "safety_checker", None) is not None
 
@@ -298,7 +286,6 @@ def parse_common_args(raw_args):
     parser.add_argument(
         "--provider", default="dml", type=str, choices=["dml", "cuda", "openvino"], help="Execution provider to use"
     )
-    parser.add_argument("--model_type", choices=["controlnet", "sd"], default="sd", type=str)
     parser.add_argument("--optimize", action="store_true", help="Runs the optimization step")
     parser.add_argument("--clean_cache", action="store_true", help="Deletes the Olive cache")
     parser.add_argument("--test_unoptimized", action="store_true", help="Use unoptimized model for inference")
@@ -372,10 +359,9 @@ def main(raw_args=None):
     model_id = common_args.model_id
 
     script_dir = Path(__file__).resolve().parent
-    model_type = common_args.model_type
-    unoptimized_model_dir = script_dir / "models" / model_type / "unoptimized" / model_id
+    unoptimized_model_dir = script_dir / "models" / "unoptimized" / model_id
     optimized_dir_name = f"optimized-{provider}"
-    optimized_model_dir = script_dir / "models" / model_type / optimized_dir_name / model_id
+    optimized_model_dir = script_dir / "models" / optimized_dir_name / model_id
 
     if common_args.clean_cache:
         shutil.rmtree(script_dir / "cache", ignore_errors=True)
@@ -402,7 +388,7 @@ def main(raw_args=None):
                 from sd_utils.ort import validate_args
 
                 validate_args(ort_args, common_args.provider)
-            optimize(common_args.model_id, model_type, common_args.provider, unoptimized_model_dir, optimized_model_dir)
+            optimize(common_args.model_id, common_args.provider, unoptimized_model_dir, optimized_model_dir)
 
     generator = None if common_args.seed is None else np.random.RandomState(seed=common_args.seed)
 
