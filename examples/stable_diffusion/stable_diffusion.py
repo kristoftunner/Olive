@@ -13,7 +13,7 @@ from typing import Dict
 import config
 import numpy as np
 import torch
-from diffusers import DiffusionPipeline
+from diffusers import DiffusionPipeline, StableDiffusionControlNetPipeline, ControlNetModel
 from packaging import version
 from user_script import get_base_model_name
 
@@ -195,6 +195,7 @@ def update_config_with_provider(config: Dict, provider: str):
 
 def optimize(
     model_id: str,
+    model_type: str,
     provider: str,
     unoptimized_model_dir: Path,
     optimized_model_dir: Path,
@@ -220,15 +221,33 @@ def optimize(
     # Load the entire PyTorch pipeline to ensure all models and their configurations are downloaded and cached.
     # This avoids an issue where the non-ONNX components (tokenizer, scheduler, and feature extractor) are not
     # automatically cached correctly if individual models are fetched one at a time.
-    print("Download stable diffusion PyTorch pipeline...")
-    pipeline = DiffusionPipeline.from_pretrained(base_model_id, torch_dtype=torch.float32)
+    print(f"Download {model_type} PyTorch pipeline...")
+
+    if model_type == "controlnet":
+        canny_controlnet = ControlNetModel.from_pretrained(
+            "lllyasviel/control_v11p_sd15_canny", torch_dtype=torch.float32
+        )
+
+        pipeline = StableDiffusionControlNetPipeline.from_pretrained(
+            base_model_id, controlnet=canny_controlnet, safety_checker=None, torch_dtype=torch.float32
+        )
+    elif model_type == "sd":
+        pipeline = DiffusionPipeline.from_pretrained(base_model_id, torch_dtype=torch.float32)
+    else:
+        raise ValueError(f"Unsupported model type: {model_type}")
+
     config.vae_sample_size = pipeline.vae.config.sample_size
     config.cross_attention_dim = pipeline.unet.config.cross_attention_dim
     config.unet_sample_size = pipeline.unet.config.sample_size
 
     model_info = {}
 
-    submodel_names = ["vae_encoder", "vae_decoder", "unet", "text_encoder"]
+    if model_type == "controlnet":
+        submodel_names = ["vae_encoder", "vae_decoder", "unet_controlnet", "text_encoder", "controlnet"]
+    elif model_type == "sd":
+        submodel_names = ["vae_encoder", "vae_decoder", "unet", "text_encoder"]
+    else:
+        raise ValueError(f"Unsupported model type: {model_type}")
 
     has_safety_checker = getattr(pipeline, "safety_checker", None) is not None
 
@@ -282,6 +301,7 @@ def optimize(
 def parse_common_args(raw_args):
     parser = argparse.ArgumentParser("Common arguments")
 
+    parser.add_argument("--model_type", choices=["controlnet", "sd"], default="sd", type=str)
     parser.add_argument("--model_id", default="CompVis/stable-diffusion-v1-4", type=str)
     parser.add_argument(
         "--provider", default="dml", type=str, choices=["dml", "cuda", "openvino"], help="Execution provider to use"
@@ -388,7 +408,7 @@ def main(raw_args=None):
                 from sd_utils.ort import validate_args
 
                 validate_args(ort_args, common_args.provider)
-            optimize(common_args.model_id, common_args.provider, unoptimized_model_dir, optimized_model_dir)
+            optimize(common_args.model_id, common_args.model_type, common_args.provider, unoptimized_model_dir, optimized_model_dir)
 
     generator = None if common_args.seed is None else np.random.RandomState(seed=common_args.seed)
 
