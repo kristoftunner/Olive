@@ -243,7 +243,8 @@ def optimize(
     model_info = {}
 
     if model_type == "controlnet":
-        submodel_names = ["vae_encoder", "vae_decoder", "unet_controlnet", "text_encoder", "controlnet"]
+        submodel_names = ["vae_encoder", "vae_decoder", "unet", "text_encoder", "controlnet"]
+        submodel_config_files = ["vae_encoder", "vae_decoder", "unet_controlnet", "text_encoder", "controlnet"]
     elif model_type == "sd":
         submodel_names = ["vae_encoder", "vae_decoder", "unet", "text_encoder"]
     else:
@@ -257,16 +258,18 @@ def optimize(
         else:
             submodel_names.append("safety_checker")
 
-    for submodel_name in submodel_names:
+    for (submodel_name, submodel_config_file) in zip(submodel_names, submodel_config_files):
         print(f"\nOptimizing {submodel_name}")
 
         olive_config = None
-        with (script_dir / f"config_{submodel_name}.json").open() as fin:
+        with (script_dir / f"config_{submodel_config_file}.json").open() as fin:
             olive_config = json.load(fin)
         olive_config = update_config_with_provider(olive_config, provider)
 
-        if submodel_name in ("unet", "text_encoder"):
+        if submodel_name in ("unet", "text_encoder", "unet_controlnet"):
             olive_config["input_model"]["model_path"] = model_id
+        elif submodel_name == "controlnet":
+            olive_config["input_model"]["model_path"] = olive_config["input_model"]["model_path"]
         else:
             # Only the unet & text encoder are affected by LoRA, so it's better to use the base model ID for
             # other models: the Olive cache is based on the JSON config, and two LoRA variants with the same

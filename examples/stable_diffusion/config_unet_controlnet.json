@@ -5,8 +5,26 @@
         "model_loader": "unet_controlnet_load",
         "model_script": "user_script.py",
         "io_config": {
-            "input_names": [ "sample", "timestep", "encoder_hidden_states", "mid_blocks", "down_blocks", "return_dict" ],
-            "output_names": [ "out_sample" ]
+            "input_names": [
+                "sample",
+                "timestep",
+                "encoder_hidden_states",
+                "mid_block_0",
+                "mid_block_1",
+                "mid_block_2",
+                "mid_block_3",
+                "mid_block_4",
+                "mid_block_5",
+                "mid_block_6",
+                "mid_block_7",
+                "mid_block_8",
+                "mid_block_9",
+                "mid_block_10",
+                "mid_block_11",
+                "down_block"
+            ],
+            "output_names": [ 
+                "out_sample" ]
         },
         "dummy_inputs_func": "unet_controlnet_conversion_inputs"
     },

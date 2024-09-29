@@ -206,25 +206,24 @@ def unet_data_loader(dataset, batch_size, *args, **kwargs):
 # Controlnet
 # -----------------------------------------------------------------------------
 
-def controlnet_inputs(batch_size, torch_dtype, is_conversion_inputs=False):
-    # TODO(jstoecker): Rename onnx::Concat_4 to text_embeds and onnx::Shape_5 to time_ids
+def controlnet_inputs(batch_size, torch_dtype):
     inputs = {
-        "sample": torch.rand((2*batch_size, 4, config.unet_sample_size, config.unet_sample_size), dtype=torch_dtype),
-        "timestep": torch.rand((2*batch_size,), dtype=torch_dtype),
-        "encoder_hidden_states": torch.rand((2*batch_size, 77, config.cross_attention_dim), dtype=torch_dtype),
-        "controlnet_cond": torch.rand((2*batch_size, 3, config.unet_sample_size * 8, config.unet_sample_size * 8), dtype=torch_dtype),
+        "sample": torch.rand((batch_size, 4, config.unet_sample_size, config.unet_sample_size), dtype=torch_dtype),
+        "timestep": torch.rand((batch_size,), dtype=torch_dtype),
+        "encoder_hidden_states": torch.rand((batch_size, 77, config.cross_attention_dim), dtype=torch_dtype),
+        "controlnet_cond": torch.rand((batch_size, 3, config.unet_sample_size * 8, config.unet_sample_size * 8), dtype=torch_dtype),
+        "conditioning_scale": torch.rand((batch_size, 1), dtype=torch_dtype),
     }
     return inputs
 
 
 def controlnet_load(model_name):
-    base_model_id = get_base_model_name(model_name)
-    model = ControlNetModel.from_pretrained(base_model_id, subfolder="controlnet")
+    model = ControlNetModel.from_pretrained(model_name)
     return model
 
 
 def controlnet_conversion_inputs(model=None):
-    return tuple(controlnet_inputs(1, torch.float32, True).values())
+    return tuple(controlnet_inputs(1, torch.float32).values())
 
 
 @Registry.register_dataloader()
@@ -237,20 +236,24 @@ def controlnet_data_loader(dataset, batch_size, *args, **kwargs):
 # -----------------------------------------------------------------------------
 def unet_controlnet_inputs(batch_size, torch_dtype, is_conversion_inputs=False):
     # TODO(jstoecker): Rename onnx::Concat_4 to text_embeds and onnx::Shape_5 to time_ids
-    down_control_block = [3*torch.rand((2*batch_size, 320, 64, 64), dtype=torch_dtype)]
-    down_control_block.append(torch.rand((2*batch_size, 320, 32, 32), dtype=torch_dtype))
-    down_control_block.append(3*torch.rand((2*batch_size, 640, 32, 32), dtype=torch_dtype))
-    down_control_block.append(torch.rand((2*batch_size, 640, 16, 16), dtype=torch_dtype))
-    down_control_block.append(2*torch.rand((2*batch_size, 1280, 16, 16), dtype=torch_dtype))
-    down_control_block.append(3*torch.rand((2*batch_size, 1280, 8, 8), dtype=torch_dtype))
+    down_control_block = [torch.rand((batch_size, 320, 64, 64), dtype=torch_dtype)]
+    down_control_block.append(torch.rand((batch_size, 320, 64, 64), dtype=torch_dtype))
+    down_control_block.append(torch.rand((batch_size, 320, 64, 64), dtype=torch_dtype))
+    down_control_block.append(torch.rand((batch_size, 320, 32, 32), dtype=torch_dtype))
+    down_control_block.append(torch.rand((batch_size, 640, 32, 32), dtype=torch_dtype))
+    down_control_block.append(torch.rand((batch_size, 640, 32, 32), dtype=torch_dtype))
+    down_control_block.append(torch.rand((batch_size, 640, 16, 16), dtype=torch_dtype))
+    down_control_block.append(torch.rand((batch_size, 1280, 16, 16), dtype=torch_dtype))
+    down_control_block.append(torch.rand((batch_size, 1280, 16, 16), dtype=torch_dtype))
+    down_control_block.append(torch.rand((batch_size, 1280, 8, 8), dtype=torch_dtype))
+    down_control_block.append(torch.rand((batch_size, 1280, 8, 8), dtype=torch_dtype))
+    down_control_block.append(torch.rand((batch_size, 1280, 8, 8), dtype=torch_dtype))
 
-    mid_control_block = [2*torch.rand((1280, 8, 8), dtype=torch_dtype)]
+    mid_control_block = torch.rand((1280, 8, 8), dtype=torch_dtype)
     inputs = {
         "sample": torch.rand((batch_size, 4, config.unet_sample_size, config.unet_sample_size), dtype=torch_dtype),
         "timestep": torch.rand((batch_size,), dtype=torch_dtype),
         "encoder_hidden_states": torch.rand((batch_size, 77, config.cross_attention_dim), dtype=torch_dtype),
-        "down_block_additional_residuals": down_control_block,
-        "mid_block_additional_residual": mid_control_block,
     }
 
     # use as kwargs since they won't be in the correct position if passed along with the tuple of inputs
@@ -260,15 +263,24 @@ def unet_controlnet_inputs(batch_size, torch_dtype, is_conversion_inputs=False):
     if is_conversion_inputs:
         inputs["additional_inputs"] = {
             **kwargs,
-            "added_cond_kwargs": {
-                "text_embeds": torch.rand((1, 1280), dtype=torch_dtype),
-                "time_ids": torch.rand((1, 5), dtype=torch_dtype),
-            },
+            "down_block_additional_residuals": down_control_block,
+            "mid_block_additional_residual": mid_control_block,
         }
     else:
         inputs.update(kwargs)
-        inputs["onnx::Concat_4"] = torch.rand((1, 1280), dtype=torch_dtype)
-        inputs["onnx::Shape_5"] = torch.rand((1, 5), dtype=torch_dtype)
+        inputs["mid_block_0"] =  down_control_block[0]
+        inputs["mid_block_1"] =  down_control_block[1]
+        inputs["mid_block_2"] =  down_control_block[2]
+        inputs["mid_block_3"] =  down_control_block[3]
+        inputs["mid_block_4"] =  down_control_block[4]
+        inputs["mid_block_5"] =  down_control_block[5]
+        inputs["mid_block_6"] =  down_control_block[6]
+        inputs["mid_block_7"] =  down_control_block[7]
+        inputs["mid_block_8"] =  down_control_block[8]
+        inputs["mid_block_9"] = down_control_block[9]
+        inputs["mid_block_10"] = down_control_block[10]
+        inputs["mid_block_11"] = down_control_block[11]
+        inputs["down_block"] = mid_control_block
 
     return inputs
 
