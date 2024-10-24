@@ -7,19 +7,19 @@
         "io_config": {
             "input_names": [ "sample", "timestep", "encoder_hidden_states", "controlnet_cond", "conditioning_scale"],
             "output_names": [
-                "mid_block_0",
-                "mid_block_1",
-                "mid_block_2",
-                "mid_block_3",
-                "mid_block_4",
-                "mid_block_5",
-                "mid_block_6",
-                "mid_block_7",
-                "mid_block_8",
-                "mid_block_9",
-                "mid_block_10",
-                "mid_block_11",
-                "down_block"
+                "down_block_0",
+                "down_block_1",
+                "down_block_2",
+                "down_block_3",
+                "down_block_4",
+                "down_block_5",
+                "down_block_6",
+                "down_block_7",
+                "down_block_8",
+                "down_block_9",
+                "down_block_10",
+                "down_block_11",
+                "mid_block"
             ]
         },
         "dummy_inputs_func": "controlnet_conversion_inputs"
