@@ -1,5 +1,6 @@
 import onnxruntime as ort
 from time import time
+import config
 import os
 import numpy as np
 
@@ -34,23 +35,25 @@ if __name__ == '__main__':
         providers=["DmlExecutionProvider"],
         sess_options=session_options)
     
+    sample_height = config.unet_sample_height
+    sample_width = config.unet_sample_width
     unet_input_tensors = {
-        "sample" : np.random.rand(1,4,64,64).astype(np.float16),
+        "sample" : np.random.rand(1,4,sample_height, sample_width).astype(np.float16),
         "timestep" : np.random.rand(1).astype(np.float16),
         "encoder_hidden_states" : np.random.rand(1,77,768).astype(np.float16),
-        "mid_block_0"  : np.random.rand(1,320,64,64).astype(np.float16),
-        "mid_block_1"  : np.random.rand(1,320,64,64).astype(np.float16),
-        "mid_block_2"  : np.random.rand(1,320,64,64).astype(np.float16),
-        "mid_block_3"  : np.random.rand(1,320,32,32).astype(np.float16),
-        "mid_block_4"  : np.random.rand(1,640,32, 32).astype(np.float16),
-        "mid_block_5"  : np.random.rand(1,640,32, 32).astype(np.float16),
-        "mid_block_6"  : np.random.rand(1,640,16, 16).astype(np.float16),
-        "mid_block_7"  : np.random.rand(1,1280,16,16).astype(np.float16),
-        "mid_block_8"  : np.random.rand(1,1280,16,16).astype(np.float16),
-        "mid_block_9"  : np.random.rand(1,1280,8,8).astype(np.float16),
-        "mid_block_10" : np.random.rand(1,1280,8,8).astype(np.float16),
-        "mid_block_11" : np.random.rand(1,1280,8,8).astype(np.float16),
-        "down_block": np.random.rand(1280, 8, 8).astype(np.float16),
+        "down_block_0"  : np.random.rand(1,320, sample_height, sample_width).astype(np.float16),
+        "down_block_1"  : np.random.rand(1,320, sample_height, sample_width).astype(np.float16),
+        "down_block_2"  : np.random.rand(1,320, sample_height, sample_width).astype(np.float16),
+        "down_block_3"  : np.random.rand(1,320, int(round(sample_height / 2)), int(round(sample_width / 2))).astype(np.float16),
+        "down_block_4"  : np.random.rand(1,640, int(round(sample_height / 2)), int(round(sample_width / 2))).astype(np.float16),
+        "down_block_5"  : np.random.rand(1,640, int(round(sample_height / 2)), int(round(sample_width / 2))).astype(np.float16),
+        "down_block_6"  : np.random.rand(1,640, int(round(sample_height / 4)), int(round(sample_width / 4))).astype(np.float16),
+        "down_block_7"  : np.random.rand(1,1280,int(round(sample_height / 4)), int(round(sample_width / 4))).astype(np.float16),
+        "down_block_8"  : np.random.rand(1,1280,int(round(sample_height / 4)), int(round(sample_width / 4))).astype(np.float16),
+        "down_block_9"  : np.random.rand(1,1280,int(round(sample_height / 8)), int(round(sample_width / 8))).astype(np.float16),
+        "down_block_10" : np.random.rand(1,1280,int(round(sample_height / 8)), int(round(sample_width / 8))).astype(np.float16),
+        "down_block_11" : np.random.rand(1,1280,int(round(sample_height / 8)), int(round(sample_width / 8))).astype(np.float16),
+        "mid_block"   : np.random.rand(1, 1280,  int(round(sample_height / 8)), int(round(sample_width / 8))).astype(np.float16),
     }
     unet_avg_time = 0
     for i in range(100):
@@ -62,10 +65,10 @@ if __name__ == '__main__':
     print(f"Average time: {unet_avg_time}")
 
     controlnet_input_tensors = {
-        "sample" : np.random.rand(1,4,64,64).astype(np.float16),
+        "sample": np.random.rand(1, 4, sample_height, sample_width).astype(np.float16),
         "timestep" : np.random.rand(1).astype(np.float16),
         "encoder_hidden_states" : np.random.rand(1,77,768).astype(np.float16),
-        "controlnet_cond" : np.random.rand(1,3,512,512).astype(np.float16),
+        "controlnet_cond" : np.random.rand(1,3,config.image_height, config.image_width).astype(np.float16),
         "conditioning_scale" : np.random.rand(1,1).astype(np.float16),
     }
 

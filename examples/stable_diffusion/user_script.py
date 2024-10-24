@@ -11,6 +11,9 @@ from transformers.models.clip.modeling_clip import CLIPTextModel
 
 from olive.data.registry import Registry
 
+# model resolution:
+# either 512x512
+# or 640x360
 
 # Helper latency-only dataloader that creates random tensors with no label
 class RandomDataLoader:
@@ -150,7 +153,7 @@ def text_encoder_data_loader(dataset, batch_size, *args, **kwargs):
 def unet_inputs(batch_size, torch_dtype, is_conversion_inputs=False):
     # TODO(jstoecker): Rename onnx::Concat_4 to text_embeds and onnx::Shape_5 to time_ids
     inputs = {
-        "sample": torch.rand((batch_size, 4, config.unet_sample_size, config.unet_sample_size), dtype=torch_dtype),
+        "sample": torch.rand((batch_size, 4, config.unet_sample_height, config.unet_sample_width), dtype=torch_dtype),
         "timestep": torch.rand((batch_size,), dtype=torch_dtype),
         "encoder_hidden_states": torch.rand((batch_size, 77, config.cross_attention_dim), dtype=torch_dtype),
     }
@@ -208,10 +211,10 @@ def unet_data_loader(dataset, batch_size, *args, **kwargs):
 
 def controlnet_inputs(batch_size, torch_dtype):
     inputs = {
-        "sample": torch.rand((batch_size, 4, config.unet_sample_size, config.unet_sample_size), dtype=torch_dtype),
+        "sample": torch.rand((batch_size, 4, config.unet_sample_height, config.unet_sample_width), dtype=torch_dtype),
         "timestep": torch.rand((batch_size,), dtype=torch_dtype),
         "encoder_hidden_states": torch.rand((batch_size, 77, config.cross_attention_dim), dtype=torch_dtype),
-        "controlnet_cond": torch.rand((batch_size, 3, config.unet_sample_size * 8, config.unet_sample_size * 8), dtype=torch_dtype),
+        "controlnet_cond": torch.rand((batch_size, 3, config.unet_sample_height * 8, config.unet_sample_width * 8), dtype=torch_dtype),
         "conditioning_scale": torch.rand((batch_size, 1), dtype=torch_dtype),
     }
     return inputs
@@ -236,22 +239,24 @@ def controlnet_data_loader(dataset, batch_size, *args, **kwargs):
 # -----------------------------------------------------------------------------
 def unet_controlnet_inputs(batch_size, torch_dtype, is_conversion_inputs=False):
     # TODO(jstoecker): Rename onnx::Concat_4 to text_embeds and onnx::Shape_5 to time_ids
-    down_control_block = [torch.rand((batch_size, 320, 64, 64), dtype=torch_dtype)]
-    down_control_block.append(torch.rand((batch_size, 320, 64, 64), dtype=torch_dtype))
-    down_control_block.append(torch.rand((batch_size, 320, 64, 64), dtype=torch_dtype))
-    down_control_block.append(torch.rand((batch_size, 320, 32, 32), dtype=torch_dtype))
-    down_control_block.append(torch.rand((batch_size, 640, 32, 32), dtype=torch_dtype))
-    down_control_block.append(torch.rand((batch_size, 640, 32, 32), dtype=torch_dtype))
-    down_control_block.append(torch.rand((batch_size, 640, 16, 16), dtype=torch_dtype))
-    down_control_block.append(torch.rand((batch_size, 1280, 16, 16), dtype=torch_dtype))
-    down_control_block.append(torch.rand((batch_size, 1280, 16, 16), dtype=torch_dtype))
-    down_control_block.append(torch.rand((batch_size, 1280, 8, 8), dtype=torch_dtype))
-    down_control_block.append(torch.rand((batch_size, 1280, 8, 8), dtype=torch_dtype))
-    down_control_block.append(torch.rand((batch_size, 1280, 8, 8), dtype=torch_dtype))
+    sample_width = config.unet_sample_width
+    sample_height = config.unet_sample_height
+    down_control_block =     [torch.rand((batch_size, 320,  sample_height, sample_width), dtype=torch_dtype)]
+    down_control_block.append(torch.rand((batch_size, 320,  sample_height, sample_width), dtype=torch_dtype))
+    down_control_block.append(torch.rand((batch_size, 320,  sample_height, sample_width), dtype=torch_dtype))
+    down_control_block.append(torch.rand((batch_size, 320,  int(round(sample_height / 2)), int(round(sample_width / 2))), dtype=torch_dtype))
+    down_control_block.append(torch.rand((batch_size, 640,  int(round(sample_height / 2)), int(round(sample_width / 2))), dtype=torch_dtype))
+    down_control_block.append(torch.rand((batch_size, 640,  int(round(sample_height / 2)), int(round(sample_width / 2))), dtype=torch_dtype))
+    down_control_block.append(torch.rand((batch_size, 640,  int(round(sample_height / 4)), int(round(sample_width / 4))), dtype=torch_dtype))
+    down_control_block.append(torch.rand((batch_size, 1280, int(round(sample_height / 4)), int(round(sample_width / 4))), dtype=torch_dtype))
+    down_control_block.append(torch.rand((batch_size, 1280, int(round(sample_height / 4)), int(round(sample_width / 4))), dtype=torch_dtype))
+    down_control_block.append(torch.rand((batch_size, 1280, int(round(sample_height / 8)), int(round(sample_width / 8))), dtype=torch_dtype))
+    down_control_block.append(torch.rand((batch_size, 1280, int(round(sample_height / 8)), int(round(sample_width / 8))), dtype=torch_dtype))
+    down_control_block.append(torch.rand((batch_size, 1280, int(round(sample_height / 8)), int(round(sample_width / 8))), dtype=torch_dtype))
 
-    mid_control_block = torch.rand((1280, 8, 8), dtype=torch_dtype)
+    mid_control_block = torch.rand((1, 1280, int(round(sample_height / 8)), int(round(sample_width / 8))), dtype=torch_dtype)
     inputs = {
-        "sample": torch.rand((batch_size, 4, config.unet_sample_size, config.unet_sample_size), dtype=torch_dtype),
+        "sample": torch.rand((batch_size, 4, config.unet_sample_height, config.unet_sample_width), dtype=torch_dtype),
         "timestep": torch.rand((batch_size,), dtype=torch_dtype),
         "encoder_hidden_states": torch.rand((batch_size, 77, config.cross_attention_dim), dtype=torch_dtype),
     }
@@ -309,7 +314,7 @@ def unet_controlnet_data_loader(dataset, batch_size, *args, **kwargs):
 
 
 def vae_encoder_inputs(batch_size, torch_dtype):
-    return {"sample": torch.rand((batch_size, 3, config.vae_sample_size, config.vae_sample_size), dtype=torch_dtype)}
+    return {"sample": torch.rand((batch_size, 3, config.vae_sample_height, config.vae_sample_width), dtype=torch_dtype)}
 
 
 def vae_encoder_load(model_name):
@@ -336,7 +341,7 @@ def vae_encoder_data_loader(dataset, batch_size, *args, **kwargs):
 def vae_decoder_inputs(batch_size, torch_dtype):
     return {
         "latent_sample": torch.rand(
-            (batch_size, 4, config.unet_sample_size, config.unet_sample_size), dtype=torch_dtype
+            (batch_size, 4, config.unet_sample_height, config.unet_sample_width), dtype=torch_dtype
         )
     }
 
@@ -365,7 +370,7 @@ def vae_decoder_data_loader(dataset, batch_size, *args, **kwargs):
 def safety_checker_inputs(batch_size, torch_dtype):
     return {
         "clip_input": torch.rand((batch_size, 3, 224, 224), dtype=torch_dtype),
-        "images": torch.rand((batch_size, config.vae_sample_size, config.vae_sample_size, 3), dtype=torch_dtype),
+        "images": torch.rand((batch_size, config.vae_sample_width, config.vae_sample_width, 3), dtype=torch_dtype),
     }
 
 

@@ -244,9 +244,9 @@ def optimize(
     else:
         raise ValueError(f"Unsupported model type: {model_type}")
 
-    config.vae_sample_size = pipeline.vae.config.sample_size
-    config.cross_attention_dim = pipeline.unet.config.cross_attention_dim
-    config.unet_sample_size = pipeline.unet.config.sample_size
+    #config.vae_sample_size = pipeline.vae.config.sample_size
+    #config.cross_attention_dim = pipeline.unet.config.cross_attention_dim
+    #config.unet_sample_size = pipeline.unet.config.sample_size
 
     model_info = {}
 
