@@ -223,9 +223,17 @@ def optimize(
     # automatically cached correctly if individual models are fetched one at a time.
     print(f"Download {model_type} PyTorch pipeline...")
 
-    if model_type == "controlnet":
+    if model_type == "controlnet_canny":
         canny_controlnet = ControlNetModel.from_pretrained(
             "lllyasviel/control_v11p_sd15_canny", torch_dtype=torch.float32
+        )
+
+        pipeline = StableDiffusionControlNetPipeline.from_pretrained(
+            base_model_id, controlnet=canny_controlnet, safety_checker=None, torch_dtype=torch.float32
+        )
+    if model_type == "controlnet_depth":
+        canny_controlnet = ControlNetModel.from_pretrained(
+            "lllyasviel/control_v11f1p_sd15_depth", torch_dtype=torch.float32
         )
 
         pipeline = StableDiffusionControlNetPipeline.from_pretrained(
@@ -242,9 +250,12 @@ def optimize(
 
     model_info = {}
 
-    if model_type == "controlnet":
+    if model_type == "controlnet_canny":
         submodel_names = ["vae_encoder", "vae_decoder", "unet", "text_encoder", "controlnet"]
-        submodel_config_files = ["vae_encoder", "vae_decoder", "unet_controlnet", "text_encoder", "controlnet"]
+        submodel_config_files = ["vae_encoder", "vae_decoder", "unet_controlnet", "text_encoder", "controlnet_canny"]
+    elif model_type == "controlnet_depth":
+        submodel_names = ["vae_encoder", "vae_decoder", "unet", "text_encoder", "controlnet"]
+        submodel_config_files = ["vae_encoder", "vae_decoder", "unet_controlnet", "text_encoder", "controlnet_depth"]
     elif model_type == "sd":
         submodel_names = ["vae_encoder", "vae_decoder", "unet", "text_encoder"]
     else:
@@ -268,7 +279,7 @@ def optimize(
 
         if submodel_name in ("unet", "text_encoder", "unet_controlnet"):
             olive_config["input_model"]["model_path"] = model_id
-        elif submodel_name == "controlnet":
+        elif submodel_name == "controlnet_canny" or submodel_name == "controlnet_depth":
             olive_config["input_model"]["model_path"] = olive_config["input_model"]["model_path"]
         else:
             # Only the unet & text encoder are affected by LoRA, so it's better to use the base model ID for
