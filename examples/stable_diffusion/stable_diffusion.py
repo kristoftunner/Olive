@@ -224,16 +224,17 @@ def optimize(
     print(f"Download {model_type} PyTorch pipeline...")
 
     if model_type == "controlnet_canny":
-        canny_controlnet = ControlNetModel.from_pretrained(
-            "lllyasviel/control_v11p_sd15_canny", torch_dtype=torch.float32
-        )
+        controlnet_model_id = "lllyasviel/control_v11p_sd15_canny"
+        #controlnet_model_id = "lllyasviel/control_v11p_sd15_canny"
+    elif model_type == "controlnet_depth":
+        controlnet_model_id = "thibaud/controlnet-sd21-depth-diffusers"
+        #controlnet_model_id = "lllyasviel/control_v11f1p_sd15_depth"
+    else:
+        controlnet_model_id = None
 
-        pipeline = StableDiffusionControlNetPipeline.from_pretrained(
-            base_model_id, controlnet=canny_controlnet, safety_checker=None, torch_dtype=torch.float32
-        )
-    if model_type == "controlnet_depth":
+    if model_type == "controlnet_canny" or model_type == "controlnet_depth":
         canny_controlnet = ControlNetModel.from_pretrained(
-            "lllyasviel/control_v11f1p_sd15_depth", torch_dtype=torch.float32
+            controlnet_model_id, torch_dtype=torch.float32
         )
 
         pipeline = StableDiffusionControlNetPipeline.from_pretrained(
@@ -245,17 +246,14 @@ def optimize(
         raise ValueError(f"Unsupported model type: {model_type}")
 
     #config.vae_sample_size = pipeline.vae.config.sample_size
-    #config.cross_attention_dim = pipeline.unet.config.cross_attention_dim
+    config.cross_attention_dim = pipeline.unet.config.cross_attention_dim
     #config.unet_sample_size = pipeline.unet.config.sample_size
 
     model_info = {}
 
-    if model_type == "controlnet_canny":
+    if model_type == "controlnet_canny" or model_type == "controlnet_depth":
         submodel_names = ["vae_encoder", "vae_decoder", "unet", "text_encoder", "controlnet"]
-        submodel_config_files = ["vae_encoder", "vae_decoder", "unet_controlnet", "text_encoder", "controlnet_canny"]
-    elif model_type == "controlnet_depth":
-        submodel_names = ["vae_encoder", "vae_decoder", "unet", "text_encoder", "controlnet"]
-        submodel_config_files = ["vae_encoder", "vae_decoder", "unet_controlnet", "text_encoder", "controlnet_depth"]
+        submodel_config_files = ["vae_encoder", "vae_decoder", "unet_controlnet", "text_encoder", "controlnet"]
     elif model_type == "sd":
         submodel_names = ["vae_encoder", "vae_decoder", "unet", "text_encoder"]
     else:
@@ -279,8 +277,8 @@ def optimize(
 
         if submodel_name in ("unet", "text_encoder", "unet_controlnet"):
             olive_config["input_model"]["model_path"] = model_id
-        elif submodel_name == "controlnet_canny" or submodel_name == "controlnet_depth":
-            olive_config["input_model"]["model_path"] = olive_config["input_model"]["model_path"]
+        elif submodel_name == "controlnet":
+            olive_config["input_model"]["model_path"] = controlnet_model_id
         else:
             # Only the unet & text encoder are affected by LoRA, so it's better to use the base model ID for
             # other models: the Olive cache is based on the JSON config, and two LoRA variants with the same
@@ -315,7 +313,7 @@ def optimize(
 def parse_common_args(raw_args):
     parser = argparse.ArgumentParser("Common arguments")
 
-    parser.add_argument("--model_type", choices=["controlnet", "sd"], default="sd", type=str)
+    parser.add_argument("--model_type", choices=["controlnet_canny", "controlnet_depth", "sd"], default="sd", type=str)
     parser.add_argument("--model_id", default="CompVis/stable-diffusion-v1-4", type=str)
     parser.add_argument(
         "--provider", default="dml", type=str, choices=["dml", "cuda", "openvino"], help="Execution provider to use"

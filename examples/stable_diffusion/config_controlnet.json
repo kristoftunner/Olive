@@ -1,7 +1,6 @@
 {
     "input_model": {
         "type": "PyTorchModel",
-        "model_path": "lllyasviel/control_v11p_sd15_canny",
         "model_loader": "controlnet_load",
         "model_script": "user_script.py",
         "io_config": {
