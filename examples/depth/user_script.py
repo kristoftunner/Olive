@@ -4,8 +4,10 @@
 # --------------------------------------------------------------------------
 import config
 import torch
+import os
 
 from olive.data.registry import Registry
+from midas.model_loader import default_models, load_model
 
 # model resolution:
 # either 512x512
@@ -34,7 +36,9 @@ def midas_depth_inputs(batch_size, torch_dtype):
 
 
 def midas_depth_load(model_name):
-    model = None
+    model_type = os.path.splitext(os.path.basename(model_name))[0]
+    model, _, net_w, net_h = load_model(torch.device("cpu"), model_name, model_type, optimize=True, height=config.image_height, square=False)
+    print(f"Loaded model: {model_name} with width:{net_w} height:{net_h}")
     return model
 
 

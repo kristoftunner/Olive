@@ -1,2 +1,17 @@
--r requirements-common.txt
+accelerate
+# breaking changes in diffusers lora implementation
+diffusers<0.30.0
+onnx
+pillow
+protobuf==3.20.3 # protobuf 4.x aborts with OOM when optimizing unet
+tabulate
+torch
+torchvision
+# StableDiffusionSafetyChecker vision_model ignores attn_implementation
+transformers<4.43.0
 onnxruntime-directml>=1.16.0
+numpy==1.23.4
+opencv-python==4.6.0.66
+imutils==0.5.4
+timm==0.6.12
+einops==0.6.0
