@@ -215,7 +215,7 @@ def controlnet_inputs(batch_size, torch_dtype):
         "timestep": torch.rand((batch_size,), dtype=torch_dtype),
         "encoder_hidden_states": torch.rand((batch_size, 77, config.cross_attention_dim), dtype=torch_dtype),
         "controlnet_cond": torch.rand((batch_size, 3, config.unet_sample_height * 8, config.unet_sample_width * 8), dtype=torch_dtype),
-        "conditioning_scale": torch.rand((batch_size, 1), dtype=torch_dtype),
+        "controlnet_scale": torch.rand((batch_size, 1), dtype=torch_dtype),
     }
     return inputs
 
@@ -273,19 +273,19 @@ def unet_controlnet_inputs(batch_size, torch_dtype, is_conversion_inputs=False):
         }
     else:
         inputs.update(kwargs)
-        inputs["down_block_0"] =  down_control_block[0]
-        inputs["down_block_1"] =  down_control_block[1]
-        inputs["down_block_2"] =  down_control_block[2]
-        inputs["down_block_3"] =  down_control_block[3]
-        inputs["down_block_4"] =  down_control_block[4]
-        inputs["down_block_5"] =  down_control_block[5]
-        inputs["down_block_6"] =  down_control_block[6]
-        inputs["down_block_7"] =  down_control_block[7]
-        inputs["down_block_8"] =  down_control_block[8]
-        inputs["down_block_9"] = down_control_block[9]
-        inputs["down_block_10"] = down_control_block[10]
-        inputs["down_block_11"] = down_control_block[11]
-        inputs["mid_block"] = mid_control_block
+        inputs["controlnet_downblock_1"] =  down_control_block[0]
+        inputs["controlnet_downblock_2"] =  down_control_block[1]
+        inputs["controlnet_downblock_3"] =  down_control_block[2]
+        inputs["controlnet_downblock_4"] =  down_control_block[3]
+        inputs["controlnet_downblock_5"] =  down_control_block[4]
+        inputs["controlnet_downblock_6"] =  down_control_block[5]
+        inputs["controlnet_downblock_7"] =  down_control_block[6]
+        inputs["controlnet_downblock_8"] =  down_control_block[7]
+        inputs["controlnet_downblock_9"] =  down_control_block[8]
+        inputs["controlnet_downblock_10"] = down_control_block[9]
+        inputs["controlnet_downblock_11"] = down_control_block[10]
+        inputs["controlnet_downblock_12"] = down_control_block[11]
+        inputs["controlnet_midblock"] = mid_control_block
 
     return inputs
 

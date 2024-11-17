@@ -9,22 +9,22 @@
                 "sample",
                 "timestep",
                 "encoder_hidden_states",
-                "down_block_0",
-                "down_block_1",
-                "down_block_2",
-                "down_block_3",
-                "down_block_4",
-                "down_block_5",
-                "down_block_6",
-                "down_block_7",
-                "down_block_8",
-                "down_block_9",
-                "down_block_10",
-                "down_block_11",
-                "mid_block"
+                "controlnet_downblock_1",
+                "controlnet_downblock_2",
+                "controlnet_downblock_3",
+                "controlnet_downblock_4",
+                "controlnet_downblock_5",
+                "controlnet_downblock_6",
+                "controlnet_downblock_7",
+                "controlnet_downblock_8",
+                "controlnet_downblock_9",
+                "controlnet_downblock_10",
+                "controlnet_downblock_11",
+                "controlnet_downblock_12",
+                "controlnet_midblock"
             ],
             "output_names": [ 
-                "out_sample" ]
+                "noise_pred" ]
         },
         "dummy_inputs_func": "unet_controlnet_conversion_inputs"
     },

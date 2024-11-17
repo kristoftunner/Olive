@@ -227,8 +227,8 @@ def optimize(
         controlnet_model_id = "lllyasviel/control_v11p_sd15_canny"
         #controlnet_model_id = "lllyasviel/control_v11p_sd15_canny"
     elif model_type == "controlnet_depth":
-        controlnet_model_id = "thibaud/controlnet-sd21-depth-diffusers"
-        #controlnet_model_id = "lllyasviel/control_v11f1p_sd15_depth"
+        #controlnet_model_id = "thibaud/controlnet-sd21-depth-diffusers"
+        controlnet_model_id = "lllyasviel/control_v11f1p_sd15_depth"
     else:
         controlnet_model_id = None
 
