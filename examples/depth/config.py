@@ -3,5 +3,5 @@
 # Licensed under the MIT License.
 # --------------------------------------------------------------------------
 
-image_width = 640
-image_height = 352
+image_width = 768
+image_height = 512

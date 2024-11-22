@@ -7,11 +7,9 @@ import torch
 import os
 
 from olive.data.registry import Registry
-from midas.model_loader import default_models, load_model
+from midas.model_loader import load_model
 
-# model resolution:
-# either 512x512
-# or 640x360
+print("Loading user script")
 
 # Helper latency-only dataloader that creates random tensors with no label
 class RandomDataLoader:
@@ -24,13 +22,9 @@ class RandomDataLoader:
         label = None
         return self.create_input_func(self.batch_size, self.torch_dtype), label
 
-# -----------------------------------------------------------------------------
-# Controlnet
-# -----------------------------------------------------------------------------
-
 def midas_depth_inputs(batch_size, torch_dtype):
     inputs = {
-        "input": torch.rand((batch_size, 3, config.image_width, config.image_height), dtype=torch_dtype),
+        "input": torch.rand((batch_size, 3, config.image_height, config.image_width), dtype=torch_dtype),
     }
     return inputs
 

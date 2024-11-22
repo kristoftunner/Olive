@@ -43,15 +43,9 @@
     },
     "passes": {
         "convert": { "type": "OnnxConversion", "target_opset": 14 },
-        "ov_convert": {
-            "type": "OpenVINOConversion",
-            "user_script": "user_script.py",
-            "example_input_func": "text_encoder_conversion_inputs",
-            "output_model": "text_encoder"
-        },
         "optimize": {
             "type": "OrtTransformersOptimization",
-            "model_type": "clip",
+            "model_type": "unet",
             "opt_level": 0,
             "float16": true,
             "use_gpu": true,

@@ -273,18 +273,18 @@ def unet_controlnet_inputs(batch_size, torch_dtype, is_conversion_inputs=False):
         }
     else:
         inputs.update(kwargs)
-        inputs["controlnet_downblock_1"] =  down_control_block[0]
-        inputs["controlnet_downblock_2"] =  down_control_block[1]
-        inputs["controlnet_downblock_3"] =  down_control_block[2]
-        inputs["controlnet_downblock_4"] =  down_control_block[3]
-        inputs["controlnet_downblock_5"] =  down_control_block[4]
-        inputs["controlnet_downblock_6"] =  down_control_block[5]
-        inputs["controlnet_downblock_7"] =  down_control_block[6]
-        inputs["controlnet_downblock_8"] =  down_control_block[7]
-        inputs["controlnet_downblock_9"] =  down_control_block[8]
-        inputs["controlnet_downblock_10"] = down_control_block[9]
-        inputs["controlnet_downblock_11"] = down_control_block[10]
-        inputs["controlnet_downblock_12"] = down_control_block[11]
+        inputs["controlnet_downblock1"] =  down_control_block[0]
+        inputs["controlnet_downblock2"] =  down_control_block[1]
+        inputs["controlnet_downblock3"] =  down_control_block[2]
+        inputs["controlnet_downblock4"] =  down_control_block[3]
+        inputs["controlnet_downblock5"] =  down_control_block[4]
+        inputs["controlnet_downblock6"] =  down_control_block[5]
+        inputs["controlnet_downblock7"] =  down_control_block[6]
+        inputs["controlnet_downblock8"] =  down_control_block[7]
+        inputs["controlnet_downblock9"] =  down_control_block[8]
+        inputs["controlnet_downblock10"] = down_control_block[9]
+        inputs["controlnet_downblock11"] = down_control_block[10]
+        inputs["controlnet_downblock12"] = down_control_block[11]
         inputs["controlnet_midblock"] = mid_control_block
 
     return inputs
