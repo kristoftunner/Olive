@@ -57,6 +57,12 @@
             "all_tensors_to_one_file": true,
             "external_data_name": "weights.pb"
         },
+        "ov_convert": {
+            "type": "OpenVINOConversion",
+            "user_script": "user_script.py",
+            "example_input_func": "get_unet_ov_example_input",
+            "output_model": "controlnet"
+        },
         "optimize": {
             "type": "OrtTransformersOptimization",
             "model_type": "unet",
@@ -97,7 +103,7 @@
             "keep_io_types": false
         }
     },
-    "pass_flows": [ [ "convert", "optimize" ] ],
+    "pass_flows": [ [ "convert", "ov_convert","optimize" ] ],
     "log_severity_level": 0,
     "evaluator": "common_evaluator",
     "evaluate_input_model": false,
