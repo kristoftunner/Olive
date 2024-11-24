@@ -59,13 +59,25 @@ def text_encoder_data_loader(dataset, batch_size, *args, **kwargs):
 # Controlnet
 # -----------------------------------------------------------------------------
 
-def controlnet_inputs(batch_size, torch_dtype):
+def controlnet_inputs(batch_size, torch_dtype, is_conversion_inputs=False):
     inputs = {
         "sample": torch.rand((batch_size, 4, config.unet_sample_height, config.unet_sample_width), dtype=torch_dtype),
         "timestep": torch.rand((batch_size,), dtype=torch_dtype),
         "encoder_hidden_states": torch.rand((batch_size, 77, config.cross_attention_dim), dtype=torch_dtype),
         "controlnet_cond": torch.rand((batch_size, 3, config.unet_sample_height * 8, config.unet_sample_width * 8), dtype=torch_dtype),
         "controlnet_scale": torch.rand((batch_size, 1), dtype=torch_dtype),
+    }
+    return inputs
+
+def get_controlnet_ov_example_input():
+    batch_size = 1
+    torch_dtype = torch.float32
+    inputs = {
+        "sample": torch.rand((batch_size, 4, config.unet_sample_height, config.unet_sample_width), dtype=torch_dtype),
+        "timestep": torch.rand((batch_size,), dtype=torch_dtype),
+        "encoder_hidden_states": torch.rand((batch_size, 77, config.cross_attention_dim), dtype=torch_dtype),
+        "controlnet_cond": torch.rand((batch_size, 3, config.unet_sample_height * 8, config.unet_sample_width * 8), dtype=torch_dtype),
+        "conditioning_scale": torch.rand((batch_size, 1), dtype=torch_dtype),
     }
     return inputs
 
@@ -76,7 +88,7 @@ def controlnet_load(model_name):
 
 
 def controlnet_conversion_inputs(model=None):
-    return tuple(controlnet_inputs(1, torch.float32).values())
+    return tuple(controlnet_inputs(1, torch.float32, True).values())
 
 
 @Registry.register_dataloader()
@@ -171,7 +183,15 @@ def get_unet_ov_example_input():
     down_control_block.append(torch.rand((batch_size, 1280, int(round(sample_height / 8)), int(round(sample_width / 8))), dtype=torch_dtype))
 
     mid_control_block = torch.rand((1, 1280, int(round(sample_height / 8)), int(round(sample_width / 8))), dtype=torch_dtype)
-    return (latents, t, encoder_hidden_state, None, None, None, None, None, down_control_block, mid_control_block)
+    inputs = {
+        "sample": torch.rand((batch_size, 4, config.unet_sample_height, config.unet_sample_width), dtype=torch_dtype),
+        "timestep": torch.rand((batch_size,), dtype=torch_dtype),
+        "encoder_hidden_states": torch.rand((batch_size, 77, config.cross_attention_dim), dtype=torch_dtype),
+        "down_block_additional_residuals": down_control_block,
+        "mid_block_additional_residual": mid_control_block,
+    }
+    return inputs
+    #return (latents, t, encoder_hidden_state, down_control_block, mid_control_block)
 
 def unet_controlnet_conversion_inputs(model=None):
     return tuple(unet_controlnet_inputs(1, torch.float32, True).values())

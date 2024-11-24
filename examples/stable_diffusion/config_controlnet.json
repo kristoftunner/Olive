@@ -60,7 +60,7 @@
         "ov_convert": {
             "type": "OpenVINOConversion",
             "user_script": "user_script.py",
-            "example_input_func": "get_unet_ov_example_input",
+            "example_input_func": "get_controlnet_ov_example_input",
             "output_model": "controlnet"
         },
         "optimize": {
