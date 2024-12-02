@@ -42,7 +42,8 @@
             "type": "OpenVINOConversion",
             "user_script": "user_script.py",
             "example_input_func": "text_encoder_conversion_inputs",
-            "output_model": "text_encoder"
+            "output_model": "text_encoder",
+            "extra_configs":{ "input" : [1, 77] }
         },
         "optimize": {
             "type": "OrtTransformersOptimization",
