@@ -24,7 +24,27 @@
                 "controlnet_midblock"
             ],
             "output_names": [ 
-                "noise_pred" ]
+                "noise_pred" ],
+            "dynamic_axes": {
+                "sample": {
+                    "0": "unet_sample_batch"
+                },
+                "timestep": { "0": "unet_time_batch" },
+                "encoder_hidden_states": { "0": "unet_hidden_batch"},
+                "controlnet_downblock1":  { "0": "controlnet_downblock1_batch" },
+                "controlnet_downblock2":  { "0": "controlnet_downblock2_batch" },
+                "controlnet_downblock3":  { "0": "controlnet_downblock3_batch" },
+                "controlnet_downblock4":  { "0": "controlnet_downblock4_batch" },
+                "controlnet_downblock5":  { "0": "controlnet_downblock5_batch" },
+                "controlnet_downblock6":  { "0": "controlnet_downblock6_batch" },
+                "controlnet_downblock7":  { "0": "controlnet_downblock7_batch" },
+                "controlnet_downblock8":  { "0": "controlnet_downblock8_batch" },
+                "controlnet_downblock9":  { "0": "controlnet_downblock9_batch" },
+                "controlnet_downblock10": { "0": "controlnet_downblock10_batch" },
+                "controlnet_downblock11": { "0": "controlnet_downblock11_batch" },
+                "controlnet_downblock12": { "0": "controlnet_downblock12_batch" },
+                "controlnet_midblock":    { "0": "controlnet_midblock_batch" }
+            }
         },
         "dummy_inputs_func": "unet_controlnet_conversion_inputs"
     },

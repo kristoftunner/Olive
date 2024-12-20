@@ -6,7 +6,8 @@
         "model_script": "user_script.py",
         "io_config": {
             "input_names": [ "latent_sample", "return_dict" ],
-            "output_names": [ "sample" ]
+            "output_names": [ "sample" ],
+            "dynamic_axes": { "latent_sample": { "0": "sample_batch"} }
         },
         "dummy_inputs_func": "vae_decoder_conversion_inputs"
     },

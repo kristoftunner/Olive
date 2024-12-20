@@ -19,7 +19,14 @@
                 "controlnet_downblock11",
                 "controlnet_downblock12",
                 "controlnet_midblock"
-            ]
+            ],
+            "dynamic_axes": {
+                "sample": {"0": "sample_batch"},
+                "timestep": {"0": "timestep_batch"},
+                "encoder_hidden_states": {"0": "encoder_hidden_states_batch"},
+                "controlnet_cond": {"0": "controlnet_cond_batch"},
+                "controlnet_scale": {"0": "controlnet_scale_batch"}
+            }
         },
         "dummy_inputs_func": "controlnet_conversion_inputs"
     },
